@@ -28,9 +28,9 @@ if distro == []:
 if os.path.exists('/etc/pacman.d'):
     pkgs = colored(subprocess.getoutput('pacman -Q | wc -l'), 'blue')
 elif os.path.exists('/etc/apt'):
-    pkgs = colored(subprocess.getoutput('dpkg --list | wc -l'), 'cyan')
+    pkgs = colored(subprocess.getoutput('dpkg --list | wc -l'), 'blue')
 elif os.path.exists('/etc/dnf'):
-    pkgs = colored(subprocess.getoutput('rpm -qa | wc -l'), 'cyan')
+    pkgs = colored(subprocess.getoutput('rpm -qa | wc -l'), 'blue')
 else:
     pkgs = "¯\_(ツ)_/¯"
 
