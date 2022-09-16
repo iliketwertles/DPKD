@@ -1,58 +1,39 @@
-#!/usr/bin/env python
-import subprocess
+import strformat
 import os
-import platform
-from termcolor import colored
+import osproc
+import strutils
+import terminal
 
-# ascii art
-#   .----.
-#   |C>_ |
-# __|____|__
-#|  ______--|
-#`-/.::::.\-'a
-# `--------'
+proc Distro(): string =
+   var info = io.readLines("/etc/os-release", 3)
+   return ansiForegroundColorCode(fgCyan) & capitalizeAscii(info[2].replace("ID=", "")) & ansiResetCode
 
-# check distro
-with open('/etc/os-release') as f:
-    distro = []
-    for ln in f:
-        if ln.startswith("ID="):
-            distro.append(ln[3:])
+proc Packages(): string =
+   if existsFile("/etc/pacman.conf"):
+      return ansiForegroundColorCode(fgBlue) & execProcess("pacman -Q | wc -l").strip & ansiResetCode
+   elif dirExists("/etc/apt"):
+      return ansiForegroundColorCode(fgBlue) & execProcess("dpkg -l | wc -l").strip & ansiResetCode
+   elif dirExists("/etc/dnf"):
+      return ansiForegroundColorCode(fgBlue) & execProcess("rpm -qa | wc -l").strip & ansiResetCode
 
-for word in distro:
-    distro = colored(word.strip("\n").capitalize(), 'cyan')
-if distro == []:
-    distro = "¯\_(ツ)_/¯"
+proc Kernel(): string =
+   let kernel = execProcess("uname -r").strip
+   return ansiForegroundColorCode(fgYellow) & kernel & ansiResetCode
 
-# check package manager and get packages acordingly
-if os.path.exists('/etc/pacman.d'):
-    pkgs = colored(subprocess.getoutput('pacman -Q | wc -l'), 'blue')
-elif os.path.exists('/etc/apt'):
-    pkgs = colored(subprocess.getoutput('dpkg --list | wc -l'), 'blue')
-elif os.path.exists('/etc/dnf'):
-    pkgs = colored(subprocess.getoutput('rpm -qa | wc -l'), 'blue')
-else:
-    pkgs = "¯\_(ツ)_/¯"
+proc Desktop(): string =
+   if getEnv("XDG_CURRENT_DESKTOP") == "":
+      return ansiForegroundColorCode(fgRed) & capitalizeAscii(getEnv("DESKTOP_SESSION")) & ansiResetCode 
+   else:
+      return ansiForegroundColorCode(fgRed) & getEnv("XDG_CURRENT_DESKTOP") & ansiResetCode
 
-# kernel, nothing special
-kernel = colored(platform.release(), 'yellow')
+#prompt
+let p = ansiForegroundColorCode(fgGreen) & "C>_" & ansiResetCode
 
-# check desktop env
-if os.environ.get('XDG_CURRENT_DESKTOP') == None and os.environ.get('DESKTOP_SESSION') == None:
-    desktop = "¯\_(ツ)_/¯"
-elif os.environ.get('XDG_CURRENT_DESKTOP') == None: 
-    desktop = colored(os.environ.get('DESKTOP_SESSION').capitalize, 'red')
-else:
-    desktop = colored(os.environ.get('XDG_CURRENT_DESKTOP'), 'red')
-
-# not needed but looks cool, stuff
-prompt = colored('C>_', 'green')
-
-logo=f'''   .----.
-   |{prompt} |     Distro: {distro}
- __|____|__   Packages: {pkgs}
-|  ______--|  Kernel: {kernel}
-`-/.::::.\-'a Desktop: {desktop}
- `--------'
-  '''
-print(logo)
+var ascii = fmt("""
+   .----.
+   |{p} |     Distro: {Distro()}
+ __|____|__   Packages: {Packages()}
+|  ______--|  Kernel: {Kernel()}
+`-/.::::.\-'a Desktop: {Desktop()}
+ `--------'""")
+echo ascii
