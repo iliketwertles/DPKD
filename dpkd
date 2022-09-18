@@ -5,26 +5,35 @@ import strutils
 import terminal
 
 proc Distro(): string =
-   var info = io.readLines("/etc/os-release", 3)
-   return ansiForegroundColorCode(fgCyan) & capitalizeAscii(info[2].replace("ID=", "")) & ansiResetCode
+  when defined(Linux):
+    var info = io.readLines("/etc/os-release", 3)
+    return ansiForegroundColorCode(fgCyan) & capitalizeAscii(info[2].replace("ID=", "")) & ansiResetCode
+  elif defined(MacOS) or defined(MacOSX):
+    return ansiForegroundColorCode(fgCyan) & capitalizeAscii("MacOS") & ansiResetCode
 
 proc Packages(): string =
-   if existsFile("/etc/pacman.conf"):
+  when defined(Linux):
+    if existsFile("/etc/pacman.conf"):
       return ansiForegroundColorCode(fgBlue) & execProcess("pacman -Q | wc -l").strip & ansiResetCode
-   elif dirExists("/etc/apt"):
+    elif dirExists("/etc/apt"):
       return ansiForegroundColorCode(fgBlue) & execProcess("dpkg -l | wc -l").strip & ansiResetCode
-   elif dirExists("/etc/dnf"):
+    elif dirExists("/etc/dnf"):
       return ansiForegroundColorCode(fgBlue) & execProcess("rpm -qa | wc -l").strip & ansiResetCode
+  elif defined(MacOS) or defined(MacOSX):
+    return ansiForegroundColorCode(fgBlue) & execProcess("brew list | wc -l") & ansiResetCod
 
 proc Kernel(): string =
    let kernel = execProcess("uname -r").strip
    return ansiForegroundColorCode(fgYellow) & kernel & ansiResetCode
 
 proc Desktop(): string =
-   if getEnv("XDG_CURRENT_DESKTOP") == "":
+  when defined(Linux):
+    if getEnv("XDG_CURRENT_DESKTOP") == "":
       return ansiForegroundColorCode(fgRed) & capitalizeAscii(getEnv("DESKTOP_SESSION")) & ansiResetCode 
-   else:
+    else:
       return ansiForegroundColorCode(fgRed) & getEnv("XDG_CURRENT_DESKTOP") & ansiResetCode
+  elif defined(Macos) or defined(MacOSX):
+    return ansiForegroundColorCode(fgRed) & "Finder" & ansiResetCode
 
 #prompt
 let p = ansiForegroundColorCode(fgGreen) & "C>_" & ansiResetCode
