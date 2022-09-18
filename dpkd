@@ -7,9 +7,9 @@ import terminal
 proc Distro(): string =
   when defined(Linux):
     var info = io.readLines("/etc/os-release", 3)
-    return ansiForegroundColorCode(fgCyan) & capitalizeAscii(info[2].replace("ID=", "")) & ansiResetCode
+    ansiForegroundColorCode(fgCyan) & capitalizeAscii(info[2].replace("ID=", "")) & ansiResetCode
   elif defined(MacOS) or defined(MacOSX):
-    return ansiForegroundColorCode(fgCyan) & capitalizeAscii("MacOS") & ansiResetCode
+    ansiForegroundColorCode(fgCyan) & "MacOS" & ansiResetCode
 
 proc Packages(): string =
   when defined(Linux):
@@ -20,23 +20,25 @@ proc Packages(): string =
     elif dirExists("/etc/dnf"):
       return ansiForegroundColorCode(fgBlue) & execProcess("rpm -qa | wc -l").strip & ansiResetCode
   elif defined(MacOS) or defined(MacOSX):
-    return ansiForegroundColorCode(fgBlue) & execProcess("brew list | wc -l") & ansiResetCod
+    ansiForegroundColorCode(fgBlue) & execProcess("brew list | wc -l") & ansiResetCode
 
 proc Kernel(): string =
-   let kernel = execProcess("uname -r").strip
-   return ansiForegroundColorCode(fgYellow) & kernel & ansiResetCode
+  when defined(Linux) or defined(MacOS) or defined(MacOSX): 
+    let kernel = execProcess("uname -r").strip
+    ansiForegroundColorCode(fgYellow) & kernel & ansiResetCode
 
 proc Desktop(): string =
   when defined(Linux):
     if getEnv("XDG_CURRENT_DESKTOP") == "":
-      return ansiForegroundColorCode(fgRed) & capitalizeAscii(getEnv("DESKTOP_SESSION")) & ansiResetCode 
+      ansiForegroundColorCode(fgRed) & capitalizeAscii(getEnv("DESKTOP_SESSION")) & ansiResetCode 
     else:
-      return ansiForegroundColorCode(fgRed) & getEnv("XDG_CURRENT_DESKTOP") & ansiResetCode
+      ansiForegroundColorCode(fgRed) & getEnv("XDG_CURRENT_DESKTOP") & ansiResetCode
   elif defined(Macos) or defined(MacOSX):
     return ansiForegroundColorCode(fgRed) & "Finder" & ansiResetCode
 
 #prompt
-let p = ansiForegroundColorCode(fgGreen) & "C>_" & ansiResetCode
+when defined(Linux) or defined(MacOS) or defined(MacOSX):
+  let p = ansiForegroundColorCode(fgGreen) & "C>_" & ansiResetCode
 
 var ascii = fmt("""
    .----.
