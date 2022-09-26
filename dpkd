@@ -4,35 +4,41 @@ import osproc
 import strutils
 import terminal
 
-proc Distro(): string =
+proc getDistro(): string =
   when defined(Linux):
     var info = io.readLines("/etc/os-release", 3)
     ansiForegroundColorCode(fgCyan) & capitalizeAscii(info[2].replace("ID=", "")) & ansiResetCode
   elif defined(MacOS) or defined(MacOSX):
     ansiForegroundColorCode(fgCyan) & "MacOS" & ansiResetCode
 
-proc Packages(): string =
+proc getPackages(): string =
   when defined(Linux):
-    if existsFile("/etc/pacman.conf"):
+    if fileExists("/etc/pacman.conf"):
       return ansiForegroundColorCode(fgBlue) & execProcess("pacman -Q | wc -l").strip & ansiResetCode
-    elif dirExists("/etc/apt"):
+    elif fileExists("/etc/apt/apt.conf"):
       return ansiForegroundColorCode(fgBlue) & execProcess("dpkg -l | wc -l").strip & ansiResetCode
-    elif dirExists("/etc/dnf"):
+    elif fileExists("/etc/dnf/dnf.conf"):
       return ansiForegroundColorCode(fgBlue) & execProcess("rpm -qa | wc -l").strip & ansiResetCode
+    elif fileExists("/etc/portage/make.conf"):
+      return ansiForegroundColorCode(fgBlue) & execProcess("equery list '*' | wc -l").strip & ansiResetCode
+    elif fileExists("/etc/apk/arch"):
+      return ansiForegroundColorCode(fgBlue) & execProcess("apk list | wc -l").strip & ansiResetCode
   elif defined(MacOS) or defined(MacOSX):
     ansiForegroundColorCode(fgBlue) & execProcess("brew list | wc -l") & ansiResetCode
 
-proc Kernel(): string =
+proc getKernel(): string =
   when defined(Linux) or defined(MacOS) or defined(MacOSX): 
     let kernel = execProcess("uname -r").strip
     ansiForegroundColorCode(fgYellow) & kernel & ansiResetCode
 
-proc Desktop(): string =
+proc getDesktop(): string =
   when defined(Linux):
     if getEnv("XDG_CURRENT_DESKTOP") == "":
-      ansiForegroundColorCode(fgRed) & capitalizeAscii(getEnv("DESKTOP_SESSION")) & ansiResetCode 
-    else:
-      ansiForegroundColorCode(fgRed) & getEnv("XDG_CURRENT_DESKTOP") & ansiResetCode
+      return ansiForegroundColorCode(fgRed) & capitalizeAscii(getEnv("DESKTOP_SESSION")) & ansiResetCode 
+    elif getEnv("XDG_CURRENT_DESKTOP") != "":
+      return ansiForegroundColorCode(fgRed) & getEnv("XDG_CURRENT_DESKTOP") & ansiResetCode
+    elif getEnv("XDG_CURRENT_DESKTOP") == "" and getEnv("DESKTOP_SESSION") == "":
+      return ansiForegroundColorCode(fgRed) & "None" & ansiResetCode
   elif defined(Macos) or defined(MacOSX):
     return ansiForegroundColorCode(fgRed) & "Finder" & ansiResetCode
 
@@ -42,9 +48,10 @@ when defined(Linux) or defined(MacOS) or defined(MacOSX):
 
 var ascii = fmt("""
    .----.
-   |{p} |     Distro: {Distro()}
- __|____|__   Packages: {Packages()}
-|  ______--|  Kernel: {Kernel()}
-`-/.::::.\-'a Desktop: {Desktop()}
+   |{p} |     Distro: {getDistro()}
+ __|____|__   Packages: {getPackages()}
+|  ______--|  Kernel: {getKernel()}
+`-/.::::.\-'a Desktop: {getDesktop()}
  `--------'""")
+
 echo ascii
