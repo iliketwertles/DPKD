@@ -6,8 +6,9 @@ import terminal
 
 proc getDistro(): string =
   when defined(Linux):
-    var info = io.readLines("/etc/os-release", 3)
-    ansiForegroundColorCode(fgCyan) & capitalizeAscii(info[2].replace("ID=", "")) & ansiResetCode
+    for line in lines "/etc/os-release":
+      if "ID=" in line:
+        return ansiForegroundColorCode(fgCyan) & capitalizeAscii(line.replace("ID=", "")) & ansiResetCode
   elif defined(MacOS) or defined(MacOSX):
     ansiForegroundColorCode(fgCyan) & "MacOS" & ansiResetCode
 
@@ -20,7 +21,7 @@ proc getPackages(): string =
     elif fileExists("/etc/dnf/dnf.conf"):
       return ansiForegroundColorCode(fgBlue) & execProcess("rpm -qa | wc -l").strip & ansiResetCode
     elif fileExists("/etc/portage/make.conf"):
-      return ansiForegroundColorCode(fgBlue) & execProcess("equery list '*' | wc -l").strip & ansiResetCode
+      return ansiForegroundColorCode(fgBlue) & execProcess("equery l '*' | wc -l").strip & ansiResetCode
     elif fileExists("/etc/apk/arch"):
       return ansiForegroundColorCode(fgBlue) & execProcess("apk list | wc -l").strip & ansiResetCode
   elif defined(MacOS) or defined(MacOSX):
