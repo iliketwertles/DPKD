@@ -46,7 +46,7 @@ proc getDesktop(): string =
   when defined(Linux):
     var info = io.readLines("/etc/os-release", 3)
     if "chromiumos" in info[2]:
-      return ansiForegroundColorCode(fgRed) & "Chromeos... idk" & ansiResetCode
+      return ansiForegroundColorCode(fgRed) & "Ash" & ansiResetCode
     elif getEnv("XDG_CURRENT_DESKTOP") == "":
       return ansiForegroundColorCode(fgRed) & capitalizeAscii(getEnv("DESKTOP_SESSION")) & ansiResetCode 
     elif getEnv("XDG_CURRENT_DESKTOP") != "":
